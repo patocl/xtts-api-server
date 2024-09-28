@@ -763,35 +763,36 @@ async def tts_ulaw(
 @app.post("/tts_to_ulaw/")
 async def tts_to_audio_ulaw(request: SynthesisRequest, background_tasks: BackgroundTasks):
     try:
-        # Generar el archivo de audio usando TTSWrapper
+        # Generar el archivo de salida WAV usando TTS
         output_file_path = XTTS.process_tts_to_file(
             text=request.text,
             speaker_name_or_path=request.speaker_wav,
             language=request.language.lower(),
-            file_name_or_path=f'{str(uuid4())}.wav'  # Generar archivo temporal
+            file_name_or_path=f'{str(uuid4())}.wav'
         )
+        
+        # Convertir el archivo WAV a u-law
+        # Cargar el archivo WAV generado
+        audio = AudioSegment.from_wav(output_file_path)
+        
+        # Cambiar la tasa de muestreo a 8kHz y convertir a u-law
+        ulaw_io = io.BytesIO()  # Crear un buffer en memoria para exportar el audio
+        audio.set_frame_rate(8000).set_channels(1).set_sample_width(2).export(
+            ulaw_io, format="wav", codec="pcm_mulaw"
+        )
+        
+        # Obtener los datos binarios del archivo u-law desde el buffer en memoria
+        ulaw_data = ulaw_io.getvalue()
+        
+        # Codificar los datos a base64 para la respuesta
+        ulaw_base64 = base64.b64encode(ulaw_data).decode('utf-8')
 
-        # Leer el archivo generado
-        with open(output_file_path, 'rb') as f:
-            wav_data = f.read()
-
-        # Convertir a u-law y 8kHz
-        ulaw_buffer = io.BytesIO()
-        data, samplerate = sf.read(io.BytesIO(wav_data))
-        sf.write(ulaw_buffer, data, 8000, subtype='ULAW')
-        ulaw_buffer.seek(0)
-
-        # Codificar el archivo u-law a base64
-        ulaw_base64 = base64.b64encode(ulaw_buffer.read()).decode('utf-8')
-
-        # Opción para limpiar el archivo temporal si el cache no está habilitado
-        if not XTTS.enable_cache_results:
-            background_tasks.add_task(os.unlink, output_file_path)
-
-        return JSONResponse({"audio_base64": ulaw_base64})
+        # Retornar los datos en formato base64
+        return JSONResponse(content={"audio_base64": ulaw_base64})
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error processing TTS to u-law: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
     
 if __name__ == "__main__":
     try:
