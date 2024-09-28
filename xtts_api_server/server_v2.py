@@ -15,7 +15,7 @@ from pydub import AudioSegment
 from starlette.responses import StreamingResponse
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 from pydantic import BaseModel
 import uvicorn
 from loguru import logger
@@ -178,6 +178,11 @@ class SynthesisFileRequest(BaseModel):
     speaker_wav: str
     language: str
     file_name_or_path: str
+
+class SynthesisRequest(BaseModel):
+    text: str
+    speaker_wav: str
+    language: str
 
 # API Endpoints with detailed documentation
 
@@ -698,31 +703,45 @@ async def tts_ulaw(
 
         async def generator():
             try:
-                # Process TTS and stream audio chunks
+            # Process TTS and stream audio chunks
                 async for chunk in XTTS.process_tts_to_file(
                     text=text,
                     speaker_name_or_path=speaker_wav,
                     language=language.lower(),
                     stream=True
                 ):
+                    logger.info(f"Chunk length: {len(chunk)}")
+                    logger.info(f"Chunk content: {chunk[:10]}")  # Imprimir los primeros bytes para revisar el formato
                     if not chunk:
-                        continue  # Skip empty chunks
-                    
+                        continue  # Saltar chunks vacíos
+
+                    # Verificar el encabezado del archivo WAV
+                    wav_io = io.BytesIO(chunk)
+                    header = wav_io.read(4)
+                    wav_io.seek(0)
+
+                    if header != b'RIFF':
+                        logger.error("Invalid WAV file header detected.")
+                        raise HTTPException(status_code=500, detail="Invalid WAV file header detected.")
+
                     try:
                         # Convert chunk to u-law format with pydub
-                        audio_segment = AudioSegment.from_wav(io.BytesIO(chunk))
+                        audio_segment = AudioSegment.from_wav(wav_io)
                         audio_ulaw = audio_segment.set_frame_rate(8000).set_channels(1).set_sample_width(1)
-                        
+
                         # Export to u-law format in-memory
                         ulaw_io = io.BytesIO()
                         audio_ulaw.export(ulaw_io, format="wav", codec="pcm_mulaw")
-                        
+
                         # Base64 encode the u-law audio
                         ulaw_b64 = base64.b64encode(ulaw_io.getvalue()).decode('utf-8')
 
                         # Yield the Base64 encoded audio chunk
                         yield ulaw_b64 + "\n"
 
+                    except CouldntDecodeError as e:
+                        logger.error(f"Could not decode audio chunk: {e}")
+                        raise HTTPException(status_code=500, detail="Error decoding audio chunk")
                     except Exception as e:
                         logger.error(f"Error processing audio chunk: {e}")
                         raise HTTPException(status_code=500, detail="Error processing audio chunk")
@@ -741,6 +760,39 @@ async def tts_ulaw(
         logger.exception("Unexpected error during TTS streaming: %s", e)
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@app.post("/tts_to_ulaw/")
+async def tts_to_audio_ulaw(request: SynthesisRequest, background_tasks: BackgroundTasks):
+    try:
+        # Generar el archivo de audio usando TTSWrapper
+        output_file_path = XTTS.process_tts_to_file(
+            text=request.text,
+            speaker_name_or_path=request.speaker_wav,
+            language=request.language.lower(),
+            file_name_or_path=f'{str(uuid4())}.wav'  # Generar archivo temporal
+        )
+
+        # Leer el archivo generado
+        with open(output_file_path, 'rb') as f:
+            wav_data = f.read()
+
+        # Convertir a u-law y 8kHz
+        ulaw_buffer = io.BytesIO()
+        data, samplerate = sf.read(io.BytesIO(wav_data))
+        sf.write(ulaw_buffer, data, 8000, subtype='ULAW')
+        ulaw_buffer.seek(0)
+
+        # Codificar el archivo u-law a base64
+        ulaw_base64 = base64.b64encode(ulaw_buffer.read()).decode('utf-8')
+
+        # Opción para limpiar el archivo temporal si el cache no está habilitado
+        if not XTTS.enable_cache_results:
+            background_tasks.add_task(os.unlink, output_file_path)
+
+        return JSONResponse({"audio_base64": ulaw_base64})
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
 if __name__ == "__main__":
     try:
         uvicorn.run(app, host="0.0.0.0", port=8002)
