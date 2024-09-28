@@ -1,11 +1,30 @@
-dist
-venv
-speakers
-output
-test
-models
-xtts_api_server/models
+# Python related
 *.pyc
+__pycache__/
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+.venv/
+
+# Distribution folder
+dist/
+
+# Output and models
+output/
+models/
+xtts_models/
+xtts_api_server/models/
+
+# Test folder
+test/
+
+# Specific files
 xtts_api_server/RealtimeTTS/engines/coqui_engine_old.py
-xtts_models
+
+# Additional project-specific
 modules-xtts.txt
+
+# Other directories
+speakers/
