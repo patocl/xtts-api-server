@@ -1,33 +1,29 @@
 from TTS.api import TTS
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse,StreamingResponse
-
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 import uvicorn
-
 import os
 import time
 from pathlib import Path
 import shutil
 from loguru import logger
 from argparse import ArgumentParser
-from pathlib import Path
 from uuid import uuid4
-
-from xtts_api_server.tts_funcs import TTSWrapper,supported_languages,InvalidSettingsError
+from xtts_api_server.tts_funcs import TTSWrapper, supported_languages, InvalidSettingsError
 from xtts_api_server.RealtimeTTS import TextToAudioStream, CoquiEngine
-from xtts_api_server.modeldownloader import check_stream2sentence_version,install_deepspeed_based_on_python_version
+from xtts_api_server.modeldownloader import check_stream2sentence_version, install_deepspeed_based_on_python_version
 
-# Default Folders , you can change them via API
-DEVICE = os.getenv('DEVICE',"cuda")
+# Default Folders, you can change them via API
+DEVICE = os.getenv('DEVICE', "cuda")
 OUTPUT_FOLDER = os.getenv('OUTPUT', 'output')
 SPEAKER_FOLDER = os.getenv('SPEAKER', 'speakers')
 MODEL_FOLDER = os.getenv('MODEL', 'models')
 BASE_HOST = os.getenv('BASE_URL', '127.0.0.1:8020')
 BASE_URL = os.getenv('BASE_URL', '127.0.0.1:8020')
 MODEL_SOURCE = os.getenv("MODEL_SOURCE", "local")
-MODEL_VERSION = os.getenv("MODEL_VERSION","v2.0.2")
+MODEL_VERSION = os.getenv("MODEL_VERSION", "v2.0.2")
 LOWVRAM_MODE = os.getenv("LOWVRAM_MODE") == 'true'
 DEEPSPEED = os.getenv("DEEPSPEED") == 'true'
 USE_CACHE = os.getenv("USE_CACHE") == 'true'
@@ -37,12 +33,12 @@ STREAM_MODE = os.getenv("STREAM_MODE") == 'true'
 STREAM_MODE_IMPROVE = os.getenv("STREAM_MODE_IMPROVE") == 'true'
 STREAM_PLAY_SYNC = os.getenv("STREAM_PLAY_SYNC") == 'true'
 
-if(DEEPSPEED):
-  install_deepspeed_based_on_python_version()
+if DEEPSPEED:
+    install_deepspeed_based_on_python_version()
 
 # Create an instance of the TTSWrapper class and server
 app = FastAPI()
-XTTS = TTSWrapper(OUTPUT_FOLDER,SPEAKER_FOLDER,MODEL_FOLDER,LOWVRAM_MODE,MODEL_SOURCE,MODEL_VERSION,DEVICE,DEEPSPEED,USE_CACHE)
+XTTS = TTSWrapper(OUTPUT_FOLDER, SPEAKER_FOLDER, MODEL_FOLDER, LOWVRAM_MODE, MODEL_SOURCE, MODEL_VERSION, DEVICE, DEEPSPEED, USE_CACHE)
 
 # Check for old format model version
 XTTS.model_version = XTTS.check_model_version_old_format(MODEL_VERSION)
@@ -64,28 +60,25 @@ if STREAM_MODE or STREAM_MODE_IMPROVE:
 
     if STREAM_MODE_IMPROVE:
         logger.info("You launched an improved version of streaming, this version features an improved tokenizer and more context when processing sentences, which can be good for complex languages like Chinese")
-        
+
     model_path = XTTS.model_folder
-    
-    engine = CoquiEngine(specific_model=MODEL_VERSION,use_deepspeed=DEEPSPEED,local_models_path=str(model_path))
+    engine = CoquiEngine(specific_model=MODEL_VERSION, use_deepspeed=DEEPSPEED, local_models_path=str(model_path))
     stream = TextToAudioStream(engine)
 else:
-  logger.info(f"Model: '{version_string}' starts to load,wait until it loads")
-  XTTS.load_model() 
+    logger.info(f"Model: '{version_string}' starts to load,wait until it loads")
+    XTTS.load_model()
 
 if USE_CACHE:
     logger.info("You have enabled caching, this option enables caching of results, your results will be saved and if there is a repeat request, you will get a file instead of generation")
 
-# Add CORS middleware 
-origins = ["*"]
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 # Help funcs
 def play_stream(stream,language):
@@ -139,7 +132,7 @@ class SynthesisFileRequest(BaseModel):
     text: str
     speaker_wav: str 
     language: str
-    file_name_or_path: str  
+    file_name_or_path: str
 
 @app.get("/speakers_list")
 def get_speakers():
@@ -169,7 +162,7 @@ def get_models_list():
 
 @app.get("/get_tts_settings")
 def get_tts_settings():
-    settings = {**XTTS.tts_settings,"stream_chunk_size":XTTS.stream_chunk_size}
+    settings = {**XTTS.tts_settings, "stream_chunk_size": XTTS.stream_chunk_size}
     return settings
 
 @app.get("/sample/{file_name:path}")
@@ -231,14 +224,14 @@ async def tts_stream(request: Request, text: str = Query(), speaker_wav: str = Q
     if language.lower() not in supported_languages:
         raise HTTPException(status_code=400,
                             detail="Language code sent is either unsupported or misspelled.")
-            
+
     async def generator():
         chunks = XTTS.process_tts_to_file(
             text=text,
             speaker_name_or_path=speaker_wav,
             language=language.lower(),
-            stream=True,
-        )
+            stream=True)
+        
         # Write file header to the output stream.
         yield XTTS.get_wav_header()
         async for chunk in chunks:
@@ -342,4 +335,4 @@ async def tts_to_file(request: SynthesisFileRequest):
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 if __name__ == "__main__":
-    uvicorn.run(app,host="0.0.0.0",port=8002)
+    uvicorn.run(app, host="0.0.0.0", port=8002)
