@@ -3,18 +3,18 @@ import base64
 import soundfile as sf
 import io
 
-# URL del endpoint
-url = "http://127.0.0.1:8002/tts_ulaw"
+# URL del endpoint (ajusta la URL si es necesario)
+url = "http://127.0.0.1:8002/tts_to_ulaw"
 
 # Parámetros para la solicitud
 params = {
     'text': 'la vaca Lola tiene cabeza y tiene cola y hace Muuu!',
-    'speaker_wav': 'male.wav',
+    'speaker_wav': 'male_fixed.wav',
     'language': 'es'
 }
 
-# Realizar la solicitud GET al endpoint
-response = requests.get(url, params=params, stream=True)
+# Realizar la solicitud POST al endpoint
+response = requests.post(url, json=params, stream=True)
 
 # Verificar si la solicitud fue exitosa
 if response.status_code == 200:
