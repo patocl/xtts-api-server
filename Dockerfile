@@ -56,8 +56,8 @@ RUN pip install .
 RUN python3 -m pip cache purge
 
 # Copy and extract the tar.gz model file into the models directory
-COPY tts-model.tar.gz /xtts-server/xtts-server/models/tts-model.tar.gz
-RUN tar -xzvf /xtts-server/xtts-server/models/tts-model.tar.gz -C /xtts-server/xtts-server/models/ 
+# COPY tts-model.tar.gz /xtts-server/xtts-server/models/tts-model.tar.gz
+# RUN tar -xzvf /xtts-server/xtts-server/models/tts-model.tar.gz -C /xtts-server/xtts-server/models/ 
 
 # Expose the application port
 EXPOSE 8020
