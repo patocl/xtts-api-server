@@ -686,16 +686,42 @@ async def tts_to_audio(request: SynthesisRequest, background_tasks: BackgroundTa
 @app.get('/tts_ulaw')
 async def tts_to_ulaw(request: SynthesisRequest, background_tasks: BackgroundTasks):
     """
-    Convert text into speech, save the result as a .ulaw file with an 8kHz sample rate,
-    and return the generated u-law audio file.
-    
+    Convert text into speech using TTS, encode the resulting audio in u-law format with an 8 kHz sample rate, 
+    and return the audio file with a .ulaw extension.
+
     ### Parameters:
-    - `text` (str): The text to be synthesized into speech.
-    - `speaker_wav` (str): The path or name of the speaker's audio file to be used for voice cloning.
-    - `language` (str): The language code for the synthesis (e.g., 'en' for English, 'es' for Spanish).
+    - `request` (SynthesisRequest): Contains the following fields:
+        - `text` (str): The text to be synthesized into speech.
+        - `speaker_wav` (str): The path or name of the speaker's audio file to be used for voice cloning.
+        - `language` (str): The language code for the synthesis (e.g., 'en' for English, 'es' for Spanish).
 
     ### Returns:
-    - A `FileResponse` containing the generated speech as a u-law audio file.
+    - `FileResponse`: A response containing the generated speech in u-law audio format with an 8 kHz sample rate. 
+      The file will be returned with a `.ulaw` extension and MIME type `audio/basic`.
+
+    ### Example:
+    - Request:
+    ```json
+    {
+        "text": "Hello, world!",
+        "speaker_wav": "speaker1.wav",
+        "language": "en"
+    }
+    ```
+
+    - Response:
+    The response will be a file download prompt containing the synthesized audio in u-law format:
+    ```
+    File: output.ulaw
+    ```
+
+    ### Error Handling:
+    - If an error occurs during the speech synthesis or audio conversion, the function will return a `500 Internal Server Error` with a detailed message.
+
+    ### Notes:
+    - The function first generates a WAV file using the TTS engine, then converts it into u-law format with an 8 kHz sample rate.
+    - The resulting audio file will have the extension `.ulaw` and MIME type `audio/basic`.
+    - If caching is not enabled, the generated files will be deleted after use.
     """
     try:
         # Generar el archivo de salida WAV usando TTS
