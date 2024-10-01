@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  xtts-server:
+    image: xtts-server-image  # Nombre de la imagen, puedes cambiarlo si es necesario
+    build:
+      context: .  # El contexto es la carpeta donde está tu Dockerfile
+      dockerfile: Dockerfile  # El Dockerfile que mencionas
+    ports:
+      - "8020:8020"  # Exponer el puerto 8020
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]  # Habilita el uso de GPUs
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all  # Esto permite acceder a todas las GPUs disponibles
+    runtime: nvidia  # Configuración necesaria para Docker con GPUs
+    # volumes:
+    #   - ./models:/xtts-server/models  # Puedes ajustar volúmenes si necesitas persistencia
+    #   - ./speakers:/xtts-server/speakers  # Si quieres compartir el directorio de speakers local
+    #   - ./output:/xtts-server/output  # Directorio de salida
+    command: ["python3", "-m", "xtts_api_server", "--listen", "-p", "8020", "-t", "http://localhost:8020", "-sf", "xtts-server/speakers", "-o", "xtts-server/output", "-mf", "xtts-server/models", "--deepspeed"]
