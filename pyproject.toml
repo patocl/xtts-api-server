@@ -4,11 +4,11 @@ build-backend = "hatchling.build"
 
 [project]
 name = "xtts-api-server"
-version = "0.9.0"
+version = "1.0.0"
 authors = [
-  { name="daswer123", email="daswerq123@gmail.com" },
+  { name="AdrianXira", email="adrian.sosa@xira.ai" },
 ]
-description = "A simple FastAPI server to host XTTSv2"
+description = "A simple FastAPI server to host XTTSv2, A modified version of xtts-api-server "
 readme = "README.md"
 requires-python = ">=3.9"
 classifiers = [
@@ -39,8 +39,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/daswer123/xtts-api-server"
-"Bug Tracker" = "https://github.com/daswer123/xtts-api-server/issues"
+Homepage = "https://github.com/AdrianXira/xtts-api-server"
+"Bug Tracker" = "https://github.com/AdrianXira/xtts-api-server/issues"
+Original Project = "https://github.com/daswer123/xtts-api-server"  # Enlace al proyecto original
 
 [tool.hatch.build.targets.wheel]
 only-include=["xtts_api_server"]
