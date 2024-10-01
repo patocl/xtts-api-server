@@ -687,7 +687,7 @@ async def tts_to_audio(request: SynthesisRequest, background_tasks: BackgroundTa
 async def tts_to_ulaw(request: SynthesisRequest, background_tasks: BackgroundTasks):
     """
     Convert text into speech using TTS, encode the resulting audio in u-law format with an 8 kHz sample rate, 
-    and return the audio file with a .ulaw extension.
+    and return the audio file with a .wav extension (encoded in u-law).
 
     ### Parameters:
     - `request` (SynthesisRequest): Contains the following fields:
@@ -697,31 +697,10 @@ async def tts_to_ulaw(request: SynthesisRequest, background_tasks: BackgroundTas
 
     ### Returns:
     - `FileResponse`: A response containing the generated speech in u-law audio format with an 8 kHz sample rate. 
-      The file will be returned with a `.ulaw` extension and MIME type `audio/basic`.
-
-    ### Example:
-    - Request:
-    ```json
-    {
-        "text": "Hello, world!",
-        "speaker_wav": "speaker1.wav",
-        "language": "en"
-    }
-    ```
-
-    - Response:
-    The response will be a file download prompt containing the synthesized audio in u-law format:
-    ```
-    File: output.ulaw
-    ```
-
-    ### Error Handling:
-    - If an error occurs during the speech synthesis or audio conversion, the function will return a `500 Internal Server Error` with a detailed message.
+      The file will be returned with a `.wav` extension and MIME type `audio/wav`.
 
     ### Notes:
-    - The function first generates a WAV file using the TTS engine, then converts it into u-law format with an 8 kHz sample rate.
-    - The resulting audio file will have the extension `.ulaw` and MIME type `audio/basic`.
-    - If caching is not enabled, the generated files will be deleted after use.
+    - The function generates a WAV file using the TTS engine, then converts it into u-law format with an 8 kHz sample rate.
     """
     try:
         # Generar el archivo de salida WAV usando TTS
@@ -733,11 +712,10 @@ async def tts_to_ulaw(request: SynthesisRequest, background_tasks: BackgroundTas
         )
         
         # Convertir el archivo WAV a u-law con tasa de 8kHz
-        # Cargar el archivo WAV generado
         audio = AudioSegment.from_wav(output_file_path)
         
         # Cambiar la tasa de muestreo a 8kHz y convertir a u-law
-        ulaw_file_path = f"{str(uuid4())}.ulaw"
+        ulaw_file_path = f"{str(uuid4())}.wav"
         audio.set_frame_rate(8000).set_channels(1).set_sample_width(2).export(
             ulaw_file_path, format="wav", codec="pcm_mulaw"
         )
@@ -750,8 +728,8 @@ async def tts_to_ulaw(request: SynthesisRequest, background_tasks: BackgroundTas
         # Retornar el archivo en formato u-law
         return FileResponse(
             path=ulaw_file_path,
-            media_type='audio/basic',  # audio/basic para u-law según RFC 2046
-            filename="output.ulaw"
+            media_type='audio/wav',  # MIME type para WAV
+            filename="output.wav"
         )
 
     except Exception as e:
@@ -762,7 +740,7 @@ async def tts_to_ulaw(request: SynthesisRequest, background_tasks: BackgroundTas
 async def tts_to_audio_ulaw(request: SynthesisRequest, background_tasks: BackgroundTasks):
     """
     Convert text into speech, encode the resulting audio in u-law format with an 8 kHz sample rate, 
-    and return the audio as a base64-encoded string with .ulaw extension.
+    and return the audio as a base64-encoded string with .wav extension.
 
     ### Parameters:
     - `request` (SynthesisRequest): Contains the following fields:
@@ -773,34 +751,9 @@ async def tts_to_audio_ulaw(request: SynthesisRequest, background_tasks: Backgro
     ### Returns:
     - `JSONResponse`: A JSON object containing:
         - `audio_base64` (str): The base64-encoded u-law audio data.
-        - `file_extension` (str): The file extension for the audio file, set to "ulaw".
-        - `mime_type` (str): The MIME type for the u-law audio, set to "audio/basic".
+        - `file_extension` (str): The file extension for the audio file, set to "wav".
+        - `mime_type` (str): The MIME type for the u-law audio, set to "audio/wav".
 
-    ### Example:
-    - Request:
-    ```json
-    {
-        "text": "Hello, world!",
-        "speaker_wav": "speaker1.wav",
-        "language": "en"
-    }
-    ```
-
-    - Response:
-    ```json
-    {
-        "audio_base64": "UExhdGVkIGJhc2U2NCBlbmNvZGVkIGRhdGEuLi4=",
-        "file_extension": "ulaw",
-        "mime_type": "audio/basic"
-    }
-    ```
-
-    ### Error Handling:
-    - If there is an error during the synthesis process or audio conversion, the function will return a `500 Internal Server Error` with a detailed message.
-
-    ### Notes:
-    - The function first generates a WAV file using the TTS model, then converts it into u-law format with an 8 kHz sample rate.
-    - The resulting audio is encoded into base64 for transmission over HTTP, with `.ulaw` as the file extension and `audio/basic` as the MIME type.
     """
     try:
         # Generar el archivo de salida WAV usando TTS
@@ -812,13 +765,12 @@ async def tts_to_audio_ulaw(request: SynthesisRequest, background_tasks: Backgro
         )
         
         # Convertir el archivo WAV a u-law
-        # Cargar el archivo WAV generado
         audio = AudioSegment.from_wav(output_file_path)
         
         # Cambiar la tasa de muestreo a 8kHz y convertir a u-law
         ulaw_io = io.BytesIO()  # Crear un buffer en memoria para exportar el audio
-        audio.set_frame_rate(8000).set_channels(1).set_sample_width(1).export(
-            ulaw_io, format="ulaw"
+        audio.set_frame_rate(8000).set_channels(1).set_sample_width(2).export(
+            ulaw_io, format="wav", codec="pcm_mulaw"
         )
         
         # Obtener los datos binarios del archivo u-law desde el buffer en memoria
@@ -827,11 +779,11 @@ async def tts_to_audio_ulaw(request: SynthesisRequest, background_tasks: Backgro
         # Codificar los datos a base64 para la respuesta
         ulaw_base64 = base64.b64encode(ulaw_data).decode('utf-8')
 
-        # Retornar los datos en formato base64 con extensión y formato .ulaw
+        # Retornar los datos en formato base64 con extensión y formato .wav
         return JSONResponse(content={
             "audio_base64": ulaw_base64,
-            "file_extension": "ulaw",
-            "mime_type": "audio/basic"  # MIME type para archivos u-law
+            "file_extension": "wav",
+            "mime_type": "audio/wav"  # MIME type para archivos WAV
         })
 
     except Exception as e:
