@@ -1,0 +1,29 @@
+# Ignorar carpetas de configuración y archivos temporales
+.git
+.github/
+.env
+docker-compose.yml
+
+# Ignorar archivos de logs
+*.log
+
+# Ignorar archivos de salida y compilación
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+
+# Ignorar notebooks (si no son necesarios para el entorno de producción)
+*.ipynb
+
+# Ignorar la carpeta de ejemplo si no es necesaria para la imagen Docker
+#example/
+
+# Ignorar archivos de documentación
+# README.md
+LICENSE
+manual.py
+
+# Ignorar cualquier otra cosa que no sea relevante para la aplicación
+Dockerfile
+.venv/
