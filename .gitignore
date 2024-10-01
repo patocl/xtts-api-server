@@ -29,3 +29,4 @@ modules-xtts.txt
 # Other directories
 speakers/
 
+*.tar.gz
