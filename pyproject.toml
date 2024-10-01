@@ -41,7 +41,6 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/AdrianXira/xtts-api-server"
 "Bug Tracker" = "https://github.com/AdrianXira/xtts-api-server/issues"
-Original Project = "https://github.com/daswer123/xtts-api-server"  # Enlace al proyecto original
 
 [tool.hatch.build.targets.wheel]
 only-include=["xtts_api_server"]
