@@ -1,5 +1,4 @@
-numpy==1.22.0;python_version<="3.10"
-numpy>=1.24.3;python_version>"3.10"
+numpy==1.22.0;
 TTS @ git+https://github.com/coqui-ai/TTS@fa28f99f1508b5b5366539b2149963edcb80ba62
 PyAudio==0.2.14
 requests==2.31.0
