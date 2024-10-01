@@ -16,8 +16,4 @@ services:
     environment:
       - NVIDIA_VISIBLE_DEVICES=all  # Esto permite acceder a todas las GPUs disponibles
     runtime: nvidia  # Configuración necesaria para Docker con GPUs
-    # volumes:
-    #   - ./models:/xtts-server/models  # Puedes ajustar volúmenes si necesitas persistencia
-    #   - ./speakers:/xtts-server/speakers  # Si quieres compartir el directorio de speakers local
-    #   - ./output:/xtts-server/output  # Directorio de salida
     command: ["python3", "-m", "xtts_api_server", "--listen", "-p", "8020", "-t", "http://localhost:8020", "-sf", "xtts-server/speakers", "-o", "xtts-server/output", "-mf", "xtts-server/models", "--deepspeed"]
