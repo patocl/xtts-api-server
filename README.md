@@ -1,94 +1,150 @@
-# A simple FastAPI Server to run XTTSv2
 
-This project is inspired by [silero-api-server](https://github.com/ouoertheo/silero-api-server) and utilizes [XTTSv2](https://github.com/coqui-ai/TTS).
+# XTTS-API Server
 
-This server was created for [SillyTavern](https://github.com/SillyTavern/SillyTavern) but you can use it for your needs
+A simple FastAPI server to host XTTSv2, built with support for Text-to-Speech (TTS) functionalities, including real-time audio streaming, support for multiple speakers, and model switching.
 
-Feel free to make PRs or use the code for your own needs
+This project is a **modified version of [xtts-api-server](https://github.com/daswer123/xtts-api-server)** and utilizes [XTTSv2](https://github.com/coqui-ai/TTS). It was created to support SillyTavern, but can be used for other purposes as well.
 
-There's a [google collab version](https://colab.research.google.com/drive/1b-X3q5miwYLVMuiH_T73odMO8cbtICEY?usp=sharing) you can use it if your computer is weak.
-
-If you are looking for an option for normal XTTS use look here [https://github.com/daswer123/xtts-webui](https://github.com/daswer123/xtts-webui)
-
-**Recently I have little time to do this project, so I advise you to get acquainted with a [similar project](https://github.com/erew123/alltalk_tts)**
+Feel free to contribute or modify the code for your own needs.
 
 ## Changelog
 
-You can keep track of all changes on the [release page](https://github.com/daswer123/xtts-api-server/releases)
-
-## TODO
-- [x] Make it possible to change generation parameters through the generation request and through a different endpoint
+Track all changes on the [release page](https://github.com/AdrianXira/xtts-api-server/releases).
 
 ## Installation
 
-Simple installation :
+### Clone the repository
+
+To install this project, you must first clone the repository from GitHub:
 
 ```bash
-pip install xtts-api-server
-```
-
-This will install all the necessary dependencies, including a **CPU support only** version of PyTorch
-
-I recommend that you install the **GPU version** to improve processing speed ( up to 3 times faster )
-
-### Windows
-```bash
-python -m venv venv
-venv\Scripts\activate
-pip install xtts-api-server
-pip install torch==2.1.1+cu118 torchaudio==2.1.1+cu118 --index-url https://download.pytorch.org/whl/cu118
-```
-
-### Linux
-```bash
-sudo apt install -y python3-dev python3-venv portaudio19-dev
-python -m venv venv
-source venv\bin\activate
-pip install xtts-api-server
-pip install torch==2.1.1+cu118 torchaudio==2.1.1+cu118 --index-url https://download.pytorch.org/whl/cu118
-```
-
-### Manual
-```bash
-# Clone REPO
-git clone https://github.com/daswer123/xtts-api-server
+git clone https://github.com/AdrianXira/xtts-api-server.git
 cd xtts-api-server
-# Create virtual env
+```
+
+### Set up the environment
+
+1. **Create a Python virtual environment**:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # Linux
+   venv\Scripts\activate  # Windows
+   ```
+
+2. **Install the dependencies**:
+   You can install all the necessary dependencies from the `pyproject.toml` and `requirements.txt` files provided.
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Install additional dependencies**:
+   If you are using a GPU, you may want to install PyTorch with CUDA support to improve performance.
+   ```bash
+   pip install torch==2.1.1+cu118 torchaudio==2.1.1+cu118 --index-url https://download.pytorch.org/whl/cu118
+   ```
+
+### Manual Installation
+
+Alternatively, you can install the project manually by following these steps:
+
+```bash
+# Clone the repository
+git clone https://github.com/AdrianXira/xtts-api-server.git
+cd xtts-api-server
+# Create a virtual environment
 python -m venv venv
-venv/scripts/activate or source venv/bin/activate
-# Install deps
+source venv/bin/activate  # or venv\Scripts\activate in Windows
+# Install dependencies
 pip install -r requirements.txt
+# Install PyTorch for GPU support
 pip install torch==2.1.1+cu118 torchaudio==2.1.1+cu118 --index-url https://download.pytorch.org/whl/cu118
-# Launch server
+# Install the project
+pip install .
+# Launch the server
 python -m xtts_api_server
- 
 ```
 
-# Use Docker image with Docker Compose
+## Using Docker
 
-A Dockerfile is provided to build a Docker image, and a docker-compose.yml file is provided to run the server with Docker Compose as a service.
+A `Dockerfile` is provided for containerized deployment. Additionally, a `docker-compose.yml` is available for easier management.
 
-You can build the image with the following command:
+### Build and Run with Docker Compose
+
+1. **Build the Docker image**:
+   ```bash
+   docker compose build
+   ```
+
+2. **Run the container**:
+   ```bash
+   docker compose up -d  # Runs the server in the background
+   ```
+
+The server will be exposed on port `8020`.
+
+
+## Running the Server
+
+Once installed, you can start the server with the following command:
 
 ```bash
-mkdir xtts-api-server
-cd xtts-api-server
-docker run -d daswer123/xtts-api-server
-
+python -m xtts_api_server
 ```
 
-OR
+By default, the server will run on `localhost:8020`.
+
+If you want to allow external access, use the `--listen` option:
 
 ```bash
-cd docker
-docker compose build
+python -m xtts_api_server --listen
 ```
 
-Then you can run the server with the following command:
+### Example of Command-line Usage
+
+You can pass various flags to customize the behavior of the server:
+
+```
+usage: xtts_api_server [-h] [-hs HOST] [-p PORT] [-sf SPEAKER_FOLDER] [-o OUTPUT] [-t TUNNEL_URL] [-ms MODEL_SOURCE] [--listen] [--use-cache] [--lowvram] [--deepspeed] [--streaming-mode] [--stream-play-sync]
+```
+
+### Key Options:
+- `--deepspeed`: Speeds up processing significantly (2-3x).
+- `--listen`: Allows external access to the server.
+- `--streaming-mode`: Enables streaming mode for real-time playback.
+
+For a full list of options, run `python -m xtts_api_server -h`.
+
+
+### Endpoints
+
+- **`/tts_stream`**: Streams audio from provided text in real-time.
+- **`/tts_to_audio`**: Generates and returns a `.wav` audio file from text.
+- **`/tts_ulaw`**: Generates and returns audio in u-law format (8 kHz).
+- **`/tts_ulaw64`**: Returns the u-law audio in Base64 encoding.
+- **`/get_speakers`**: Lists available speaker files for voice cloning.
+
+## Adding Speakers
+
+You can add speaker `.wav` files to the `speakers/` folder. This allows you to clone voices from audio files. Simply place the `.wav` file in the folder, and the API will use it for synthesis.
+
+### Example Folder Structure:
 
 ```bash
-docker compose up # or with -d to run in background
+xtts-server/
+    ├── speakers/
+    │   ├── speaker1.wav
+    │   ├── speaker2.wav
+    └── models/
+        └── tts-model.tar.gz
 ```
+
+## Using Your Own Model
+
+You can load custom models by placing them in the `models/` folder. Ensure that the folder contains the required files:
+
+- `config.json`
+- `vocab.json`
+- `model.pth`
 
 ## Starting Server
 
@@ -164,10 +220,6 @@ API Docs can be accessed from [http://localhost:8020/docs](http://localhost:8020
 # How to add speaker
 
 By default the `speakers` folder should appear in the folder, you need to put there the wav file with the voice sample, you can also create a folder and put there several voice samples, this will give more accurate results
-
-# Selecting Folder
-
-You can change the folders for speakers and the folder for output via the API.
 
 # Note on creating samples for quality voice cloning
 
