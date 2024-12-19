@@ -333,7 +333,7 @@ mkdir "%~dp0xtts\speakers"
 mkdir "%~dp0xtts\output"
 
 echo %blue_bg%[%time%]%reset% %blue_fg_strong%[INFO]%reset% Adding voice examples to speakers directory...
-xcopy "%~dp0xtts-api-server\example\*" "%~dp0xtts\speakers\" /y /e
+xcopy "%~dp0xtts-api-server\speakers\*" "%~dp0xtts\speakers\" /y /e
 
 echo %blue_bg%[%time%]%reset% %blue_fg_strong%[INFO]%reset% Removing the xtts-api-server directory...
 rmdir /s /q "%~dp0xtts-api-server"

@@ -12,8 +12,7 @@ venv/
 dist/
 
 # Output and models
-output/
-models/
+models/*
 xtts_models/
 xtts_api_server/models/
 
@@ -27,6 +26,6 @@ xtts_api_server/RealtimeTTS/engines/coqui_engine_old.py
 modules-xtts.txt
 
 # Other directories
-speakers/
-
+output/*.wav
+!models/readme.md
 *.tar.gz

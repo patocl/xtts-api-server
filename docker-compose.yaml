@@ -1,19 +1,22 @@
-version: '3.8'
-
 services:
   xtts-server:
-    image: xtts-server-image  # Nombre de la imagen, puedes cambiarlo si es necesario
+    image: xtts-server-image  # Name of the image, you can change it if needed
     build:
-      context: .  # El contexto es la carpeta donde está tu Dockerfile
-      dockerfile: Dockerfile  # El Dockerfile que mencionas
+      context: .  # The context is the folder where your Dockerfile is located
+      dockerfile: Dockerfile  # Use the Dockerfile
     ports:
-      - "8020:8020"  # Exponer el puerto 8020
+      - "${HOST_PORT}:${PORT}"  # Use the HOST_PORT variable for external mapping
+    volumes:
+      - ./speakers:/xtts-server/xtts-server/speakers
+      - ./output:/xtts-server/xtts-server/output
+      - ./models:/xtts-server/xtts-server/models
     deploy:
       resources:
         reservations:
           devices:
-            - capabilities: [gpu]  # Habilita el uso de GPUs
+            - capabilities: [gpu]  # Enable GPU usage
     environment:
-      - NVIDIA_VISIBLE_DEVICES=all  # Esto permite acceder a todas las GPUs disponibles
-    runtime: nvidia  # Configuración necesaria para Docker con GPUs
-    command: ["python3", "-m", "xtts_api_server", "--listen", "-p", "8020", "-t", "http://localhost:8020", "-sf", "xtts-server/speakers", "-o", "xtts-server/output", "-mf", "xtts-server/models", "--deepspeed"]
+      - NVIDIA_VISIBLE_DEVICES=all  # Allows access to all available GPUs
+      - PORT=${PORT}  # Expose the PORT variable inside the container
+    runtime: nvidia  # Required configuration for Docker with GPUs
+    command: ["python3", "-m", "xtts_api_server", "--listen", "-p", "${PORT}", "-t", "http://localhost:${PORT}", "-sf", "xtts-server/speakers", "-o", "xtts-server/output", "-mf", "xtts-server/models", "--deepspeed"]
