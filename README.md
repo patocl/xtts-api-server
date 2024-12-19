@@ -80,7 +80,39 @@ A `Dockerfile` is provided for containerized deployment. Additionally, a `docker
    docker compose up -d  # Runs the server in the background
    ```
 
-The server will be exposed on port `8020`.
+#### Changes
+
+##### .env File
+
+Added .env file to specify ports for Docker Compose and dockerfile dinamically.
+
+.env
+   ```bash
+   # Define the internal port for the service
+   PORT=8020
+
+   # Define the external port for the service (host)
+   HOST_PORT=8080
+   ```
+
+##### Added build.ps1
+
+File for Windows users to build and run the Docker image.
+
+2. **Run and deploy the container**:
+
+If the docker is running it will be stopped and removed if the build is successful. If not it will be built and run.
+
+   ```bash
+   .\build.ps1    # Runs the server in the background
+   ```
+##### dockerfile improved
+
+Removed extra layers and added a .dockerignore file to exclude unnecessary files from the build context.
+
+##### docker-compose.yml improved
+
+Export volumens for folders model, output and speakers (previosly named examples), to facilitate the management of new speakers.
 
 
 ## Running the Server
