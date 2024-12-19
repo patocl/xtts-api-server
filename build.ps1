@@ -6,7 +6,6 @@ $green = [ConsoleColor]::Green
 $cyan = [ConsoleColor]::Cyan
 $yellow = [ConsoleColor]::Yellow
 $red = [ConsoleColor]::Red
-$reset = [ConsoleColor]::White
 
 function Write-ColoredText {
     param (
